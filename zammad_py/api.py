@@ -99,6 +99,11 @@ class ZammadAPI:
         return Organization(connection=self)
 
     @property
+    def smime_certificate(self) -> "SmimeCertificate":
+        """Return a `SmimeCertificate` instance"""
+        return SmimeCertificate(connection=self)
+
+    @property
     def role(self) -> "Role":
         """Return a `Role` instance"""
         return Role(connection=self)
@@ -277,6 +282,36 @@ class Role(Resource):
 class Organization(Resource):
     path_attribute = "organizations"
 
+class SmimeCertificate(Resource):
+    path_attribute = "integration/smime"
+
+    def create(self, certificate):
+        """Create the requested resource
+
+        :param params: Resource data for creating
+        """
+        response = self._connection.session.post(self.url + "/certificate", data=certificate)
+        return self._raise_or_return_json(response)
+
+    def search(self, params):
+        """Search using the given parameters
+
+        :param params: Search parameters
+        """
+        response = self._connection.session.post(self.url, params=params)
+        return self._raise_or_return_json(response)
+
+    def all(self, page: int = 1, filters=None) -> Pagination:
+        """Returns the list of resources
+
+        :param page: Page number
+        :param filters: Filter arguments like page, per_page
+        """
+        params = filters or {}
+        params.update({"page": page, "per_page": self._per_page, "expand": "true"})
+        response = self._connection.session.get(self.url + "/certificate", params=params)
+        data = self._raise_or_return_json(response)
+        return Pagination(items=data, resource=self, filters=filters, page=page)
 
 class Ticket(Resource):
     path_attribute = "tickets"
